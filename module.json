@@ -1,0 +1,13 @@
+{
+  "dependencies": [],
+  "singleton": true,
+  "category": "environment",
+  "defaults" : {
+    "title" : "EventForwarder",
+    "description" : "Event forwarder to integrate events with other home automation software"
+  },
+  "schema": {
+  },
+  "options": {
+  }
+}
