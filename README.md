@@ -1,4 +1,4 @@
-This module can be used to forward events from zway to your own server using a REST API.
+This module can be used to forward events from zway to your own server using a REST API, for instance to integrate with an existing home automation setup.
 
 ##Installation
 1. Create the 'EventForarder' directory in the automation/userModules directory.
