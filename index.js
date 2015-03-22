@@ -7,6 +7,26 @@ inherits(EventForwarder, AutomationModule);
 
 _module = EventForwarder;
 
+
+var host = 'localhost',
+    port = 3000;
+
+function sendRequest(method, action, data) {
+  http.request({
+    method: method,
+    url: "http://" + host + ":" + port + "/" + action,
+    data: JSON.stringify(data),
+    headers: { "Content-Type": "application/json" },
+    async: true,
+    success: function(response) {
+      debugPrint(TAG, response);
+    },
+    failure: function(response) {
+      debugPrint(TAG, response);
+    }
+  });
+}
+
 // ----------------------------------------------------------------------------
 // --- Module instance initialized
 // ----------------------------------------------------------------------------
@@ -70,30 +90,24 @@ EventForwarder.prototype.updateState = function(vDev) {
         self.devices[vDev.id].level = vDev.get('metrics:level');
 
         fields = vDev.id.replace(/ZWayVDev_zway_/, '').split('-');
+
         if(fields.length) {
 
             if(parseInt(fields[2], 10) === 0x32) {
                 meterType = global.zway.devices[fields[0]].instances[fields[1]].commandClasses[fields[2]].data[fields[3]].sensorType.value;
             }
 
-            http.request({
-                method: 'PUT',
-                async: true,
-                url: 'http://localhost:8088/razberry/devices/' + vDev.id,
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                data: JSON.stringify({
-                    status: global.zway.devices[fields[0]].data.isFailed.value ? 'offline' : 'online',
-                    nodeId: parseInt(fields[0], 10),
-                    instanceId: parseInt(fields[1], 10),
-                    cmdClass: parseInt(fields[2], 10),
-                    meterType: meterType,
-                    sensorType: fields[3] ? parseInt(fields[3], 10) : undefined,
-                    vDevId: vDev.id,
-                    value: vDev.get('metrics:level'),
-                    timestamp: vDev.get('updateTime')
-                })
+            sendRequest('PUT', 'device_state_changed', {
+                givenName: global.zway.devices[fields[0]].data.givenName.value,
+                status: global.zway.devices[fields[0]].data.isFailed.value ? 'offline' : 'online',
+                nodeId: parseInt(fields[0], 10),
+                instanceId: parseInt(fields[1], 10),
+                cmdClass: parseInt(fields[2], 10),
+                meterType: meterType,
+                sensorType: fields[3] ? parseInt(fields[3], 10) : undefined,
+                vDevId: vDev.id,
+                value: vDev.get('metrics:level'),
+                timestamp: vDev.get('updateTime')
             });
         }
     }
@@ -111,20 +125,13 @@ EventForwarder.prototype.deleteDevice = function(vDev) {
             meterType = global.zway.devices[fields[0]].instances[fields[1]].commandClasses[fields[2]].data[fields[3]].sensorType.value;
         }
 
-        http.request({
-            method: 'DELETE',
-            async: true,
-            url: 'http://localhost:8088/razberry/devices/' + vDev.id,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            data: JSON.stringify({
-                nodeId: parseInt(fields[0], 10),
-                instanceId: parseInt(fields[1], 10),
-                cmdClass: parseInt(fields[2], 10),
-                meterType: meterType,
-                sensorType: fields[3] ? parseInt(fields[3], 10) : undefined
-            })
+        sendRequest('DELETE', 'device_deleted', {
+            givenName: global.zway.devices[fields[0]].data.givenName.value,
+            nodeId: parseInt(fields[0], 10),
+            instanceId: parseInt(fields[1], 10),
+            cmdClass: parseInt(fields[2], 10),
+            meterType: meterType,
+            sensorType: fields[3] ? parseInt(fields[3], 10) : undefined
         });
 
         delete self.devices[vDev.id];
@@ -155,24 +162,17 @@ EventForwarder.prototype.createDevice = function(vDev) {
 
         global.zway.devices[fields[0]].data.isFailed.bind(self.updateStatus, fields[0]);
 
-        http.request({
-            method: 'PUT',
-            async: true,
-            url: 'http://localhost:8088/razberry/devices/' + vDev.id,
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            data: JSON.stringify({
-                status: global.zway.devices[fields[0]].data.isFailed.value ? 'offline' : 'online',
-                nodeId: parseInt(fields[0], 10),
-                instanceId: parseInt(fields[1], 10),
-                cmdClass: parseInt(fields[2], 10),
-                meterType: meterType,
-                sensorType: fields[3] ? parseInt(fields[3], 10) : undefined,
-                vDevId: vDev.id,
-                value: vDev.get('metrics:level'),
-                timestamp: vDev.get('updateTime')
-            })
+        sendRequest('PUT', 'device_created', {
+            givenName: global.zway.devices[fields[0]].data.givenName.value,
+            status: global.zway.devices[fields[0]].data.isFailed.value ? 'offline' : 'online',
+            nodeId: parseInt(fields[0], 10),
+            instanceId: parseInt(fields[1], 10),
+            cmdClass: parseInt(fields[2], 10),
+            meterType: meterType,
+            sensorType: fields[3] ? parseInt(fields[3], 10) : undefined,
+            vDevId: vDev.id,
+            value: vDev.get('metrics:level'),
+            timestamp: vDev.get('updateTime')
         });
     }
 };
@@ -181,17 +181,10 @@ EventForwarder.prototype.updateStatus = function(unknown, nodeId) {
 
     debugPrint('EventForwarder: Status update, node ' + nodeId + ' went ' + (this.value ? 'offline' : 'online'));
 
-    http.request({
-        method: 'PUT',
-        async: true,
-        url: 'http://localhost:8088/razberry/devices/' + nodeId,
-        headers: {
-            'Content-Type': 'application/json'
-        },
-        data: JSON.stringify({
-            status: this.value ? 'offline' : 'online',
-            nodeId: parseInt(nodeId, 10),
-            timestamp: this.updateTime
-        })
+    sendRequest('PUT', 'device_status_updated', {
+        givenName: global.zway.devices[fields[0]].data.givenName.value,
+        status: this.value ? 'offline' : 'online',
+        nodeId: parseInt(nodeId, 10),
+        timestamp: this.updateTime
     });
 }
