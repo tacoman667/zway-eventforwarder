@@ -107,7 +107,8 @@ EventForwarder.prototype.updateState = function(vDev) {
                 sensorType: fields[3] ? parseInt(fields[3], 10) : undefined,
                 vDevId: vDev.id,
                 value: vDev.get('metrics:level'),
-                timestamp: vDev.get('updateTime')
+                timestamp: vDev.get('updateTime'),
+                battery: global.zway.devices[fields[0]].instances[fields[1]].commandClasses[128].data.last.value // battery level
             });
         }
     }
