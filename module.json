@@ -9,5 +9,13 @@
   "schema": {
   },
   "options": {
+    "fields": {
+      "host": {
+        "label": "Host name for forwarding events to"
+      },
+      "port": {
+        "label": "Port on the host"
+      }
+    }
   }
 }

@@ -9,7 +9,7 @@ _module = EventForwarder;
 
 
 var host = 'localhost',
-    port = 3000;
+    port = 4567;
 
 function sendRequest(method, action, data) {
   http.request({
@@ -57,6 +57,9 @@ EventForwarder.prototype.init = function (config) {
     self.controller.devices.on('change:metrics:level', self.handleDevUpdates);
     self.controller.devices.on('created', self.handleDevCreation);
     self.controller.devices.on('removed', self.handleDevDeletion);
+
+    host = config.host
+    port = config.port
 };
 
 EventForwarder.prototype.stop = function () {
